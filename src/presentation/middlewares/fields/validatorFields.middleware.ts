@@ -4,11 +4,27 @@ import { check } from "express-validator";
 
 
 export class ValidatorFieldsMiddleware {
+    private static resolveUsername(req: Request): string {
+        return String(req.body?.username ?? req.body?.usuario ?? '').trim();
+    }
+
     static validateFieldsRegister = async (req: Request, res: Response, next: NextFunction) => {
         await Promise.all([
             check('name', 'Name is required').not().isEmpty().run(req),
-            check('usuario', 'Username is required').not().isEmpty().run(req),
-            check('usuario', 'Username must be at least 3 characters').isLength({ min: 3 }).run(req),
+            check('username', 'Username is required').custom(() => {
+                const username = ValidatorFieldsMiddleware.resolveUsername(req);
+                if (!username) {
+                    throw new Error('Username is required');
+                }
+                return true;
+            }).run(req),
+            check('username', 'Username must be at least 3 characters').custom(() => {
+                const username = ValidatorFieldsMiddleware.resolveUsername(req);
+                if (username.length < 3) {
+                    throw new Error('Username must be at least 3 characters');
+                }
+                return true;
+            }).run(req),
             check('password', 'Password is required').not().isEmpty().run(req),
             check('password', 'Password must be at least 6 characters').isLength({ min: 6 }).run(req),
         ]);
@@ -17,8 +33,20 @@ export class ValidatorFieldsMiddleware {
 
     static validateFieldsLogin = async (req: Request, res: Response, next: NextFunction) => {
         await Promise.all([
-            check('usuario', 'Username is required').not().isEmpty().run(req),
-            check('usuario', 'Username must be at least 3 characters').isLength({ min: 3 }).run(req),
+            check('username', 'Username is required').custom(() => {
+                const username = ValidatorFieldsMiddleware.resolveUsername(req);
+                if (!username) {
+                    throw new Error('Username is required');
+                }
+                return true;
+            }).run(req),
+            check('username', 'Username must be at least 3 characters').custom(() => {
+                const username = ValidatorFieldsMiddleware.resolveUsername(req);
+                if (username.length < 3) {
+                    throw new Error('Username must be at least 3 characters');
+                }
+                return true;
+            }).run(req),
             check('password', 'Password is required').not().isEmpty().run(req),
             check('password', 'Password must be at least 6 characters').isLength({ min: 6 }).run(req),
         ]);
